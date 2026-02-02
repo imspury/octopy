@@ -33,25 +33,27 @@ def main():
                 # Find active agreement
                 active_agreement = next((a for a in emp.agreements if a.is_active), None)
 
-                print(f"- Electricity MPAN: {emp.mpan}")
+                print("Electricity:")
+                print(f"- MPAN: {emp.mpan}")
                 if active_agreement:
-                    print(f" - Active Tariff: {active_agreement.tariff_code}")
+                    print(f"- Active Tariff: {active_agreement.tariff_code}")
                 else:
-                    print(f" - No active electricity tariff found.")
+                    print(f"- No active electricity tariff found.")
             
             # Gas Meter Points
             for gmp in prop.gas_meter_points:
                 # Find active agreement
                 active_agreement = next((a for a in gmp.agreements if a.is_active), None)
 
+                print("Gas:")
                 print(f"- Gas MPRN: {gmp.mprn}")
                 if active_agreement:
-                    print(f" - Active Tariff: {active_agreement.tariff_code}")
+                    print(f"- Active Tariff: {active_agreement.tariff_code}")
                 else:
-                    print(f" - No active gas tariff found.")
+                    print(f"- No active gas tariff found.")
                 
                 for meter in gmp.meters:
-                    print(f"  - Meter Serial: {meter.serial_number}")
+                    print(f" - Meter Serial: {meter.serial_number}")
 
     except Exception as e:
         print(f"Connection failed: {e}")
