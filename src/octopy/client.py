@@ -5,7 +5,7 @@ from typing import Dict, Any
 import requests
 
 # Custom imports
-from .models import Account
+from .models import Account, get_region_name_from_gsp
 
 class OctoClient:
     """
@@ -48,3 +48,31 @@ class OctoClient:
 
         # Convert JSON dictionary into our Account object
         return Account(**response.json())
+    
+    def get_region_from_postcode(self, postcode: str) -> str:
+        """
+        Retrieves the region name for a given postcode.
+        Uses the Grid Service Provider (GSP) code to determine the region.
+
+        Args:
+            postcode: The postcode to look up.
+
+        Returns:
+            The name of the region corresponding to the postcode.
+        Raises:
+            ValueError: If the postcode is invalid or GSP cannot be found.
+        """
+        url = f"{self.BASE_URL}/industry/grid-supply-points/"
+        params = {"postcode": postcode}
+        
+        response = self.session.get(url, params=params)
+        response.raise_for_status()
+        data = response.json()
+        results = data.get("results", [])
+
+        if not results:
+            raise ValueError(f"Could not find GSP for postcode: {postcode}")
+        
+        # Accessing group_id safely
+        gsp_code = results[0].get("group_id", "")
+        return get_region_name_from_gsp(gsp_code)

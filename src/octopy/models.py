@@ -2,6 +2,27 @@ from datetime import datetime, timezone
 from pydantic import BaseModel, Field
 from typing import List, Optional
 
+def get_region_name_from_gsp(gsp_code: str) -> str:
+    """Maps a Grid Service Provider (GSP) group code to a human-readable region name."""
+    gsp_map = {
+        "A": "Eastern England",
+        "B": "East Midlands",
+        "C": "London",
+        "D": "Merseyside and Northern Wales",
+        "E": "West Midlands",
+        "F": "North Eastern England",
+        "G": "North Western England",
+        "H": "Southern England",
+        "J": "South Eastern England",
+        "K": "Southern Wales",
+        "L": "South Western England",
+        "M": "Yorkshire",
+        "N": "Southern Scotland",
+        "P": "Northern Scotland"
+    }
+    clean_code = gsp_code.upper().replace("_", "")
+    return gsp_map.get(clean_code, f"Unknown Region ({clean_code})")
+
 class Agreement(BaseModel):
     """Represents a specific tariff agreement for a meter point."""
     tariff_code: str = Field(..., description="The unique code for the energy tariff")
