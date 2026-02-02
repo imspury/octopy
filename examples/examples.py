@@ -26,6 +26,7 @@ def main():
 
         for prop in account.properties:
             print(f"\nAddress: {prop.address_line_1}, {prop.postcode}")
+            print(f"Region: {client.get_region_from_postcode(prop.postcode)}")
 
             # Electricity Meter Points
             for emp in prop.electricity_meter_points:
