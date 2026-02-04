@@ -21,17 +21,6 @@ class OctoClient:
         # API uses basic authentication with the API key as the username
         self.session.auth = (self.api_key, "")
     
-    def check_conn(self) -> Dict[str, Any]:
-        """
-        Check the connection to the Octopus Energy API.
-
-        Returns:
-            A dictionary containing all currently active products.
-        """
-        response = self.session.get(f"{self.BASE_URL}/products/")
-        response.raise_for_status()
-        return response.json()
-    
     def get_account(self, account_number: str) -> Account:
         """
         Retrieves details for an account and returns a validated Account object.
