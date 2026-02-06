@@ -24,6 +24,41 @@ class OctoClient(BaseHTTPClient):
 
         self.api_key = api_key
         logger.info(f"Using API base URL: {self.BASE_URL}")
+
+    def _fetch_paginated_data(self, url: str, params: dict) -> list[dict]:
+        """
+        Internal helper to handle Octopus API pagination.
+        Follows 'next' links until all data is collected.
+
+        Args:
+            url: The initial URL to fetch data from.
+            params: Query parameters for the initial request.
+        
+        Returns:
+            A list of all results across paginated responses.
+        """
+        all_results = []
+        current_url = url
+        is_first_page = True
+
+        while current_url:
+            # On first request, we attach the params.
+            # On subsequent requests, the 'next' URL provided by the API already contains the necessary parameters.
+            response = self.session.get(
+                current_url, 
+                params=params if is_first_page else None
+            )
+            response.raise_for_status()
+            data = response.json()
+            
+            # Safely add the results from this page to our main list
+            all_results.extend(data.get("results", []))
+            
+            # Get the URL for the next page (will be None if we are done)
+            current_url = data.get("next")
+            is_first_page = False
+            
+        return all_results
     
     def get_account(self, account_number: str) -> Account:
         """
@@ -74,5 +109,5 @@ class OctoClient(BaseHTTPClient):
         gsp_code = results[0].get("group_id", "")
         region_name = get_region_name_from_gsp(gsp_code)
         logger.info(f"Region found: {region_name} (GSP: {gsp_code})")
-        
+
         return region_name
