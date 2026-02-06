@@ -45,11 +45,10 @@ class OctoClient(BaseHTTPClient):
         while current_url:
             # On first request, we attach the params.
             # On subsequent requests, the 'next' URL provided by the API already contains the necessary parameters.
-            response = self.session.get(
+            response = self.get(
                 current_url, 
                 params=params if is_first_page else None
             )
-            response.raise_for_status()
             data = response.json()
             
             # Safely add the results from this page to our main list
