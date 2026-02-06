@@ -1,29 +1,33 @@
 # Standard library imports
+import logging
 from typing import Dict, Any
 
 # Third-party imports
 import requests
 
 # Custom imports
-from .models import Account, get_region_name_from_gsp
+from .models import get_region_name_from_gsp, Account
+from .http_client import BaseHTTPClient
 
-class OctoClient:
-    """
-    A simple client for interacting with the Octopus Energy API.
-    """
+logger = logging.getLogger(__name__)
+
+class OctoClient(BaseHTTPClient):
+    """Client for interacting with the Octopus Energy API."""
+
     BASE_URL = "https://api.octopus.energy/v1"
 
     def __init__(self, api_key: str):
-        # Store the API key for authentication
+        """Initialise the Octopus Energy API client."""
+        session = requests.Session()
+        session.auth = (api_key, "")
+        super().__init__(session)
+
         self.api_key = api_key
-        # Initialise a session for persistent connections
-        self.session = requests.Session()
-        # API uses basic authentication with the API key as the username
-        self.session.auth = (self.api_key, "")
+        logger.info(f"Using API base URL: {self.BASE_URL}")
     
     def get_account(self, account_number: str) -> Account:
         """
-        Retrieves details for an account and returns a validated Account object.
+        Retrieve account details.
 
         Args:
             account_number: The Octopus Energy account number.
@@ -31,17 +35,19 @@ class OctoClient:
         Returns:
             An Account object containing all properties and meters.
         """
-        url = f"{self.BASE_URL}/accounts/{account_number}/"
-        response = self.session.get(url)
-        response.raise_for_status()
+        logger.info(f"Fetching account details for: {account_number}")
 
-        # Convert JSON dictionary into our Account object
+        response = self.get(f"{self.BASE_URL}/accounts/{account_number}/")
+        data = response.json()
+
+        num_properties = len(data.get('properties', []))
+        logger.info(f"Successfully retrieved account with {num_properties} property/properties.")
+
         return Account(**response.json())
     
     def get_region_from_postcode(self, postcode: str) -> str:
         """
-        Retrieves the region name for a given postcode.
-        Uses the Grid Service Provider (GSP) code to determine the region.
+        Get region name from postcode using Grid Service Provider (GSP) code.
 
         Args:
             postcode: The postcode to look up.
@@ -51,17 +57,22 @@ class OctoClient:
         Raises:
             ValueError: If the postcode is invalid or GSP cannot be found.
         """
-        url = f"{self.BASE_URL}/industry/grid-supply-points/"
-        params = {"postcode": postcode}
+        logger.info(f"Looking up region for postcode: {postcode}")
+
+        response = self.get(
+            f"{self.BASE_URL}/industry/grid-supply-points/",
+            params={"postcode": postcode}
+        )
         
-        response = self.session.get(url, params=params)
-        response.raise_for_status()
         data = response.json()
         results = data.get("results", [])
 
         if not results:
-            raise ValueError(f"Could not find GSP for postcode: {postcode}")
+            logger.warning(f"No GSP results found for postcode: {postcode}")
+            raise ValueError(f"No GSP data found for postcode: {postcode}")
         
-        # Accessing group_id safely
         gsp_code = results[0].get("group_id", "")
-        return get_region_name_from_gsp(gsp_code)
+        region_name = get_region_name_from_gsp(gsp_code)
+        logger.info(f"Region found: {region_name} (GSP: {gsp_code})")
+        
+        return region_name
