@@ -1,12 +1,13 @@
 # Standard library imports
 import logging
-from typing import Dict, Any
+from typing import Dict, Any, Optional, List
+from datetime import datetime
 
 # Third-party imports
 import requests
 
 # Custom imports
-from .models import get_region_name_from_gsp, Account
+from .models import get_region_name_from_gsp, Account, Product
 from .http_client import BaseHTTPClient
 
 logger = logging.getLogger(__name__)
@@ -111,3 +112,34 @@ class OctoClient(BaseHTTPClient):
         logger.info(f"Region found: {region_name} (GSP: {gsp_code})")
 
         return region_name
+    
+    def get_products(
+        self,
+        brand: str = "OCTOPUS_ENERGY",
+        is_variable: Optional[bool] = None,
+        is_business: Optional[bool] = None,
+        is_green: Optional[bool] = None,
+        is_prepay: Optional[bool] = None,
+        available_at: Optional[datetime] = None
+    ) -> List[Product]:
+        """
+        List all available products with optional filtering.
+        """
+        logger.info(f"Fetching product list (brand={brand})")
+
+        url = f"{self.BASE_URL}/products/"
+        params = {"brand": brand}
+
+        # Add filters only if they are provided
+        if is_variable is not None: params["is_variable"] = str(is_variable).lower()
+        if is_business is not None: params["is_business"] = str(is_business).lower()
+        if is_green is not None: params["is_green"] = str(is_green).lower()
+        if is_prepay is not None: params["is_prepay"] = str(is_prepay).lower()
+        if available_at is not None: params["available_at"] = available_at.isoformat()
+
+        logger.debug(f"Product filters: {params}")
+        
+        raw_results = self._fetch_paginated_data(url, params)
+        logger.info(f"Successfully retrieved {len(raw_results)} products.")
+
+        return [Product(**r) for r in raw_results]

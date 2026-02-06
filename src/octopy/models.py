@@ -70,3 +70,33 @@ class Account(BaseModel):
     """The top-level Octopus Account object containing all properties and meters."""
     number: str
     properties: List[Property]
+
+class Link(BaseModel):
+    """Represents a HATEOAS link provided by the API."""
+    href: str
+    method: str
+    rel: str
+
+class Product(BaseModel):
+    """Summary of an Octopus Energy product."""
+    code: str
+    direction: str
+    full_name: str
+    display_name: str
+    description: str
+    is_variable: bool
+    is_green: bool
+    is_tracker: bool
+    is_prepay: bool
+    is_business: bool
+    is_restricted: bool
+    term: Optional[int] = None
+    available_from: Optional[datetime] = None
+    available_to: Optional[datetime] = None
+    links: List[Link] = []
+    brand: str
+
+    @property
+    def is_export(self) -> bool:
+        """Returns True if this is an export tariff."""
+        return self.direction.upper() == "EXPORT"
