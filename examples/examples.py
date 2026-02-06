@@ -8,6 +8,16 @@ logging.basicConfig(
     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
 )
 
+def products(client: OctoClient):
+    """Example function to demonstrate fetching products with filters."""
+    print("Searching for variable, green tariffs...")
+    products = client.get_products(is_green=True, is_variable=True)
+    print(f"Found {len(products)} variable, green products.")
+
+    # List the first 5
+    for p in products[:5]:
+        print(f" - {p.display_name} (Code: {p.code})")
+
 def main():
     # Load configuration from .env file
     load_dotenv()
@@ -39,6 +49,9 @@ def main():
                 print(f"- Active Tariff: {active_agreement.tariff_code}")
             else:
                 print(f"- No active electricity tariff found.")
+    
+    # Example of fetching products with filters
+    products(client)
 
 if __name__ == "__main__":
     main()
